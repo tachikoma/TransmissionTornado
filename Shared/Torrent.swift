@@ -39,12 +39,14 @@ extension Torrent {
                 
                 let paused = false
                 let downloadDir: String?
-                let metainfo: String //base64 encoded .torrent contents
+                let metainfo: String? //base64 encoded .torrent contents
+                let filename: String? //filename or URL of the .torrent file
                 
                 enum CodingKeys: String, CodingKey {
                     
                     case paused
                     case downloadDir = "download-dir"
+                    case filename
                     case metainfo
                 }
             }
@@ -57,8 +59,12 @@ extension Torrent {
         
         do {
             
-            let data = try Data(contentsOf: self.url)
-            let requestData = RequestData(arguments: RequestData.Arguments(downloadDir: server.downloadDir, metainfo: data.base64EncodedString()))
+            var requestData: RequestData
+            if let data = try? Data(contentsOf: self.url) {
+                requestData = RequestData(arguments: RequestData.Arguments(downloadDir: server.downloadDir, metainfo: data.base64EncodedString(), filename: nil))
+            } else {
+                requestData = RequestData(arguments: RequestData.Arguments(downloadDir: server.downloadDir, metainfo: nil, filename: self.url.absoluteString))
+            }
             
             guard let url = URL(string: server.address)?.appendingPathComponent("/transmission/rpc") else {
                 

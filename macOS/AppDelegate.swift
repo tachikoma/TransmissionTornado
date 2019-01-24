@@ -68,6 +68,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         return true
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        NSLog("%@", urls)
+
+        let serversDropDown = NSStoryboard(name: "Main", bundle: nil).instantiateController(withIdentifier: "ServersSelectionViewController") as! ServersSelectionViewController
+
+        var window: NSWindow! =  nil
+        serversDropDown.didSelectServer = { server in
+
+            let torrent = Torrent(url: urls[0])
+            torrent.send(to: server, completion: { (error) in
+
+                if let error = error {
+
+                    DispatchQueue.main.async {
+
+                        NSAlert(error: error).runModal()
+                    }
+                    return
+                }
+
+                //show the server
+                if let url = URL(string: server.address) {
+
+                    NSWorkspace.shared.open(url)
+                }
+            })
+        }
+
+        window = NSWindow(contentViewController: serversDropDown)
+        window.title = "Open Magnet Link"
+
+        window.makeKeyAndOrderFront(application)
+    }
     
     @IBAction func openTorrent(_ sender: Any?) {
         
